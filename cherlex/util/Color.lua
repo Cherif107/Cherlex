@@ -10,7 +10,45 @@ local function switchCase(var, cases)
     return cases.default
 end
 
----@class ColorValue Color Table
+local function setSafeMetatable(value, metatable)
+    local isProtected = true
+    
+    pcall(function()
+      debug.setmetatable(value, {
+        __metatable = "protected",
+        __newindex = function()
+          error("Attempt to modify a protected value", 2)
+        end
+      })
+    end)
+    
+    local ok, err = pcall(function()
+      debug.setmetatable(value, metatable)
+    end)
+    
+    if not ok then
+      debug.setmetatable(value, nil)
+      isProtected = false
+    end
+    
+    return isProtected
+end
+
+local function getLocalId(threadLevel, condition)
+    local i = 1
+    while true do
+        local name, value = debug.getlocal(1 + threadLevel, i)
+        if name == '(*temporary)' or not name then
+            break
+        end
+        if value == condition then
+            return i
+        end
+        i = i + 1
+    end
+end
+
+---@class ColorValue:number Color Value
 ---[[ ]]---
 ---@field __type string Color Type
 ---@field public value integer Integer Value of the Color
@@ -424,7 +462,42 @@ Color.new = function(color)
     this.getComplementHarmony = function()
         return Color.fromHSB(Math.wrap(math.floor(this.hue)+180, 0, 350), this.brightness, this.saturation, this.alphaFloat)
     end
-    return this
+
+    ---@type ColorValue
+    local thisNUM = this.value
+    setSafeMetatable(thisNUM, {
+        __newindex = function(t, k, v)
+            if k == 'self' then
+                local localId = getLocalId(2, t)
+                if not localId then
+                    local preEnv = getfenv(2)
+                    for k2, v2 in pairs(preEnv) do
+                        if v2 == t then
+                            preEnv[k2] = v
+                            break
+                        end
+                    end
+                else
+                    debug.setlocal(2, localId, v)
+                end
+            end
+            this[k] = v
+        end,
+        __index = function(t, k)
+            return this[k]
+        end
+    })
+
+    local meta = getmetatable(this)
+    local ndx = meta.__newindex
+    meta.__newindex = function (t, k, v)
+        if k == 'value' then
+            thisNUM.self = v
+        end
+        ndx(t, k, v)
+    end
+    setmetatable(this, meta)
+    return thisNUM
 end
 
 return Color
