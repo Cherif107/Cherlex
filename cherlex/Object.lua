@@ -38,7 +38,7 @@ Object.instance.__newindex = function(t, k, v)
             if Object.__objectFields.__onInit[k] ~= nil then
                 rawget(t, '_')[k] = v
             else
-                rawget(t, 'set')(k, v)
+                t.checkForWaitingField(function() rawget(t, 'set')(k, v) end)
             end
         end
     end
