@@ -16,8 +16,8 @@ Text.new = function(text, width, x, y, size, color, font)
         if color ~= nil then this.color = color end
         if font ~= nil then this.font = font end
     end
-    this._set('kill', function() this.checkForWaitingField(function() removeLuaSprite(this.name, false) end) end)
-    this._set('destroy', function() this.checkForWaitingField(function() removeLuaSprite(this.name, true) end) end)
+    this._set('kill', function() this.checkForWaitingField(function() removeLuaText(this.name, false) end) end)
+    this._set('destroy', function() this.checkForWaitingField(function() removeLuaText(this.name, true) end) end)
     this._set('isNotMade', makeLuaText == nil)
     this._set('add', function(onTop)
         if this.isNotMade then tuna() end
