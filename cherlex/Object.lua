@@ -39,7 +39,7 @@ Object.instance.__newindex = function(t, k, v)
             if Object.__objectFields.__onInit[k] ~= nil then
                 rawget(t, '_')[k] = v
             else
-                t.checkForWaitingField(function() rawget(t, 'set')(k, v) end)
+                rawget(t, 'set')(k, v)
             end
         end
     end
@@ -76,23 +76,23 @@ Object.field('isAdded', false)
 Object.field('allowAdd', false)
 Object.field('__waitingFields', {})
 
-Object.field('update', function() end)
+Object.field('update', -1)
 
 Object.field('camera', 'camGame', nil, function(v, t) t.checkForWaitingField(function() setObjectCamera(t.name, v) end) return v end)
 Object.field('order', nil, function(t) return getObjectOrder(t.name) end, function(v, t) t.checkForWaitingField(function() setObjectOrder(t.name, v) end) return v end)
 Object.field('color', Color.WHITE, function(t) return Color(rawget(t, 'get')('color')) end, function(v, t) t.checkForWaitingField(function() rawget(t, 'set')('color', Color.parseColor(v)) end) return v end)
 Object.field('blend', 'NORMAL', nil, function(v, t) t.checkForWaitingField(function() setBlendMode(t.name, v) end) return v end)
 
+local oXC = _G.CHX_OBJ_TAG
 ---@return Object
 Object.new = function(ClassObject, ClassLibrary, fromPlayState, isField, name)
     -- to prevent crashing
     if not isField and not fromPlayState and not ClassObject then
         --- generating Object Tag & current ID
-        if not _G.CHX_OBJ_TAG  then
+        if not oXC  then
             _G.CHX_OBJ_COUNT = 0
             _G.CHX_OBJ_TAG = 'CHX_OBJ_'..StringUtil.random(10)
-        else
-            _G.CHX_OBJ_COUNT = _G.CHX_OBJ_COUNT + 1
+            oXC = 'yippeee'
         end
     end
 
@@ -113,7 +113,7 @@ Object.new = function(ClassObject, ClassLibrary, fromPlayState, isField, name)
         if this.classObject then
             setPropertyFromClass(this.classLibrary, Object.parseObjectString(this.name, key), v)
         else
-            setProperty(Object.parseObjectString(this.name, key), v)
+            this.checkForWaitingField(function() setProperty(Object.parseObjectString(this.name, key), v) end)
         end
     end)
     this._set('get', function(key)
@@ -294,16 +294,22 @@ Object.new = function(ClassObject, ClassLibrary, fromPlayState, isField, name)
     end)
     -- [[ ]] --
 
+    if not isField and not  fromPlayState and not ClassObject then
+        _G.CHX_OBJ_COUNT = _G.CHX_OBJ_COUNT + 1
+    end
     Object.objects[this.name] = this
     return this
 end
 
-Stage.set('onUpdate', function(el)
+o = onUpdate
+function onUpdate(el)
+    if o ~= nil then o(el) end
     for i, v in pairs(Object.objects) do
-        if v.update then
-            v.update(el)
+        if v.update ~= -1 then
+            -- debugPrint(i)
+            v.checkForWaitingField(function() v.update(el) end)
         end
     end
-end, 'ObjectUpdate')
+end
 
 return Object
