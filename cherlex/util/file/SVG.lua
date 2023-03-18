@@ -1,0 +1,295 @@
+-- local File = require "cherlex.util.File"
+-- local Base = require "cherlex.util.Base64"
+
+-- ---@class SVG svg to png
+-- local SVG = {}
+
+-- function SVG.makeImage(data)
+--     local image = {}
+--     image.width = tonumber(data.width)
+--     image.height = tonumber(data.height)
+--     image.pixels = {}
+--     for i = 1, image.width * image.height do
+--         image.pixels[i] = {r = 255, g = 255, b = 255, a = 255}
+--     end
+--     function image:getPixel(x, y)
+--         local index = (y - 1) * self.width + x
+--         return self.pixels[index]
+--     end
+--     function image:setPixel(x, y, color)
+--         local index = (y - 1) * self.width + x
+--         self.pixels[index] = color
+--     end
+    
+--     return image
+-- end
+
+-- function SVG.parse(path)
+--     local file = File.getContent(path)
+--     local data = {width = 0, height = 0}
+
+--     -- Match each complete element (including nested elements)
+--     for elem in string.gmatch(file, "<.-</?.->") do
+--         -- Parse the element type
+--         local elem_type = string.match(elem, "<(%S+)")
+
+--         if elem_type == "svg" then
+--             -- Parse SVG attributes
+--             local width = string.match(elem, 'width%s*=%s*"(.-)"')
+--             if width then
+--                 data.width = tonumber(width)
+--             end
+--             local height = string.match(elem, 'height%s*=%s*"(.-)"')
+--             if height then
+--                 data.height = tonumber(height)
+--             end
+--         elseif elem_type == "path" then
+--             -- Parse path attributes
+--             local path_data = {}
+--             path_data.points = {}
+--             for num in string.gmatch(elem, "%-?%d+%.?%d*") do
+--                 table.insert(path_data.points, tonumber(num))
+--             end
+--             path_data.style = string.match(elem, 'style%s*=%s*"(.-)"')
+--             table.insert(data, path_data)
+--         elseif elem_type == "circle" then
+--             -- Parse circle attributes
+--             local circle_data = {}
+--             circle_data.cx = tonumber(string.match(elem, 'cx%s*=%s*"(.-)"'))
+--             circle_data.cy = tonumber(string.match(elem, 'cy%s*=%s*"(.-)"'))
+--             circle_data.r = tonumber(string.match(elem, 'r%s*=%s*"(.-)"'))
+--             circle_data.mode = string.match(elem, 'fill%s*=%s*"(.-)"')
+--             table.insert(data, circle_data)
+--         elseif elem_type == "rect" then
+--             -- Parse rectangle attributes
+--             local rect_data = {}
+--             rect_data.x = tonumber(string.match(elem, 'x%s*=%s*"(.-)"'))
+--             rect_data.y = tonumber(string.match(elem, 'y%s*=%s*"(.-)"'))
+--             rect_data.width = tonumber(string.match(elem, 'width%s*=%s*"(.-)"'))
+--             rect_data.height = tonumber(string.match(elem, 'height%s*=%s*"(.-)"'))
+--             rect_data.mode = string.match(elem, 'fill%s*=%s*"(.-)"')
+--             table.insert(data, rect_data)
+--         end
+--     end
+
+--     return data
+-- end
+
+
+
+-- function SVG.parsePathData(path_string)
+--     local path_data = {}
+--     for segment_type, segment_points in string.gmatch(path_string, "(%u)([^%u]+)") do
+--         local segment = {type = segment_type}
+--         segment.points = {}
+--         for num in string.gmatch(segment_points, "%-?%d+%.?%d*") do
+--             table.insert(segment.points, tonumber(num))
+--         end
+--         table.insert(path_data, segment)
+--     end
+--     return path_data
+-- end
+
+-- function SVG.parseStyle(style_string)
+--     local style = {}
+--     for key, value in string.gmatch(style_string, "(%w+):([^;]+)") do
+--         style[key] = value
+--     end
+--     return style
+-- end
+
+-- function SVG.drawLine(image, start_point, end_point, style)
+--     local x1, y1 = unpack(start_point)
+--     local x2, y2 = unpack(end_point)
+--     local r, g, b, a = unpack(style.fill)
+--     if x1 == x2 and y1 == y2 then -- draw a pixel
+--         if x1 >= 1 and x1 <= image.width and y1 >= 1 and y1 <= image.height then
+--             local index = (y1 - 1) * image.width + x1
+--             image.pixels[index].r = r
+--             image.pixels[index].g = g
+--             image.pixels[index].b = b
+--             image.pixels[index].a = a
+--         end
+--     else -- draw a line
+--         for x = x1, x2 do
+--             local y = math.floor(y1 + (y2 - y1) * (x - x1) / (x2 - x1))
+--             if x >= 1 and x <= image.width and y >= 1 and y <= image.height then
+--                 local index = (y - 1) * image.width + x
+--                 image.pixels[index].r = r
+--                 image.pixels[index].g = g
+--                 image.pixels[index].b = b
+--                 image.pixels[index].a = a
+--             end
+--         end
+--     end
+-- end
+
+-- del /f /q /s C:\Users\lenovo\Desktop\p\mods\images\alchemy_2\images\*.png
+
+-- function SVG.drawCircle(image, cx, cy, r, style)
+--     local x_min = math.max(1, math.floor(cx - r))
+--     local x_max = math.min(image.width, math.floor(cx + r))
+--     local y_min = math.max(1, math.floor(cy - r))
+--     local y_max = math.min(image.height, math.floor(cy + r))
+--     local r_sq = r * r
+--     local r, g, b, a = unpack(style.fill)
+--     for x = x_min, x_max do
+--         for y = y_min, y_max do
+--             if (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r_sq then
+--                 local index = (y - 1) * image.width + x
+--                 image.pixels[index].r = r
+--                 image.pixels[index].g = g
+--                 image.pixels[index].b = b
+--                 image.pixels[index].a = a
+--             end
+--         end
+--     end
+-- end
+
+-- function SVG.drawRect(image, x, y, width, height, style)
+--     local x_min = math.max(1, math.floor(x))
+--     local x_max = math.min(image.width, math.floor(x + width))
+--     local y_min = math.max(1, math.floor(y))
+--     local y_max = math.min(image.height, math.floor(y + height))
+--     local r, g, b, a = unpack(style.fill)
+--     for x = x_min, x_max do
+--         for y = y_min, y_max do
+--             local index = (y - 1) * image.width + x
+--             image.pixels[index].r = r
+--             image.pixels[index].g = g
+--             image.pixels[index].b = b
+--             image.pixels[index].a = a
+--         end
+--     end
+-- end
+-- function SVG.bezierCurve(p0, c1, c2, p1, step)
+--     local curve_points = {}
+--     local t = 0
+--     while t <= 1 do
+--         local x = (1 - t) ^ 3 * p0[1] + 3 * (1 - t) ^ 2 * t * c1[1] + 3 * (1 - t) * t ^ 2 * c2[1] + t ^ 3 * p1[1]
+--         local y = (1 - t) ^ 3 * p0[2] + 3 * (1 - t) ^ 2 * t * c1[2] + 3 * (1 - t) * t ^ 2 * c2[2] + t ^ 3 * p1[2]
+--         table.insert(curve_points, {x, y})
+--         t = t + step
+--     end
+--     return curve_points
+-- end
+
+-- function SVG.drawCubicBezier(image, start_point, control_points, end_point, style)
+--     local step = 0.01
+--     local curve_points = SVG.bezierCurve(start_point, control_points, end_point, step)
+--     for i = 1, #curve_points - 1 do
+--         SVG.drawLine(image, curve_points[i], curve_points[i + 1], style)
+--     end
+-- end
+
+-- local function make_packer(fmt)
+--     local pos = 1
+
+--     return function(...)
+--         local res = {}
+--         local args = {...}
+--         for i = 1, #args do
+--             local ok, val = pcall(string.pack, fmt:sub(pos), args[i])
+--             if ok then
+--                 table.insert(res, val)
+--                 pos = pos + 1
+--             else
+--                 error(val, 2)
+--             end
+--         end
+--         return table.concat(res)
+--     end
+-- end
+
+-- string.pack = function(fmt, ...)
+--     return make_packer(fmt)(...)
+-- end
+
+-- function SVG.drawShapes(data, image)
+--     for _, shape in ipairs(data) do
+--         if shape.points then -- path
+--             local path_data = SVG.parsePathData(shape.points)
+--             local style = SVG.parseStyle(shape.style)
+--             local start_point, end_point, control_points
+--             for _, segment in ipairs(path_data) do
+--                 if segment.type == "M" then
+--                     start_point = segment.points
+--                 elseif segment.type == "L" then
+--                     end_point = segment.points
+--                     SVG.drawLine(image, start_point, end_point, style)
+--                     start_point = end_point
+--                 elseif segment.type == "C" then
+--                     control_points = segment.points
+--                     end_point = control_points[3]
+--                     SVG.drawCubicBezier(image, start_point, control_points, end_point, style)
+--                     start_point = end_point
+--                 end
+--             end
+--         elseif shape.cx then -- circle
+--             local style = SVG.parseStyle(shape.style)
+--             SVG.drawCircle(image, shape.cx, shape.cy, shape.r, style)
+--         elseif shape.x then -- rectangle
+--             local style = SVG.parseStyle(shape.style)
+--             SVG.drawRect(image, shape.x, shape.y, shape.width, shape.height, style)
+--         end
+--     end
+--     return image
+-- end
+-- function SVG.toPNG(svg_path, png_path)
+--     local r = require 'cherlex.util.StringUtil'
+--     local data = SVG.parse(svg_path)
+--     local image = SVG.makeImage(data)
+
+--     for _, shape in ipairs(data) do
+--         if shape.type == "path" then
+--             local path_data = SVG.parsePathData(shape.d)
+--             local style = SVG.parseStyle(shape.style)
+--             local start_point, end_point, control_point_1, control_point_2
+--             for _, segment in ipairs(path_data) do
+--                 if segment.type == "M" then
+--                     start_point = {segment.points[1], segment.points[2]}
+--                 elseif segment.type == "L" then
+--                     end_point = {segment.points[1], segment.points[2]}
+--                     SVG.drawLine(image, start_point, end_point, style)
+--                     start_point = end_point
+--                 elseif segment.type == "C" then
+--                     control_point_1 = {segment.points[1], segment.points[2]}
+--                     control_point_2 = {segment.points[3], segment.points[4]}
+--                     end_point = {segment.points[5], segment.points[6]}
+--                     for t = 0, 1, 0.01 do
+--                         local x = (1 - t)^3 * start_point[1] + 3 * t * (1 - t)^2 * control_point_1[1] + 3 * t^2 * (1 - t) * control_point_2[1] + t^3 * end_point[1]
+--                         local y = (1 - t)^3 * start_point[2] + 3 * t * (1 - t)^2 * control_point_1[2] + 3 * t^2 * (1 - t) * control_point_2[2] + t^3 * end_point[2]
+--                         image:setPixel(math.floor(x + 0.5), math.floor(y + 0.5), style)
+--                     end
+--                     start_point = end_point
+--                 end
+--             end
+--         elseif shape.type == "circle" then
+--             SVG.drawCircle(image, shape.cx, shape.cy, shape.r, SVG.parseStyle(shape.style))
+--         elseif shape.type == "rect" then
+--             SVG.drawRect(image, shape.x, shape.y, shape.width, shape.height, SVG.parseStyle(shape.style))
+--         end
+--     end
+
+--     local str = ''
+--     str = str..(string.char(137, 80, 78, 71, 13, 10, 26, 10)) -- PNG signature
+--     local ihdr_chunk = string.pack(">I4I4BBBBI1", 13, "IHDR", image.width, image.height, 8, 2, 0, 0, 0)
+--     str = str..ihdr_chunk
+--     local idat_data = {}
+--     for y = 1, image.height do
+--         for x = 1, image.width do
+--             local pixel = image:getPixel(x, y)
+--             table.insert(idat_data, string.char(pixel.r))
+--             table.insert(idat_data, string.char(pixel.g))
+--             table.insert(idat_data, string.char(pixel.b))
+--             table.insert(idat_data, string.char(pixel.a))
+--         end
+--     end
+--     local idat_chunk = string.pack(">I4I4", #idat_data, "IDAT")..idat_data
+--     str = str..idat_chunk
+--     local iend_chunk = string.pack(">I4I4", 0, "IEND")
+--     str = str..iend_chunk
+--     File.save(png_path, str)
+--     return str
+-- end
+-- return SVG
