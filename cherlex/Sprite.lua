@@ -20,15 +20,15 @@ Sprite.new = function(path, x, y, animated)
         local func = (this.animated and makeAnimatedLuaSprite or makeLuaSprite)
         func(this.name, path, x, y)
     end
-    this._set('kill', function() this.checkForWaitingField(function() removeLuaSprite(this.name, false) end) end)
+    this._set('kill', function() this.checkForWaitingField(function() removeLuaSprite(this.name, false) this.__waitingFields = {} end) end)
     this._set('destroy', function() this.checkForWaitingField(function() removeLuaSprite(this.name, true) end) this.destroyObject() end)
     this._set('add', function(onTop)
         if this.isNotMade then
             if this.animated then makeAnimatedLuaSprite(this.name, path, x, y) else makeLuaSprite(this.name, path, x, y) end
         end
+        this.onAdd()
         addLuaSprite(this.name, onTop)
         this.isNotMade = false
-        this.onAdd()
         this.isAdded = true
     end)
 
