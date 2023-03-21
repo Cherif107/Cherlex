@@ -159,8 +159,6 @@ Object.new = function(ClassObject, ClassLibrary, fromPlayState, isField, name)
         this.getScreenPosition(_point, camera)
         point.putWeak()
 
-        -- debugPrint(this.x, ':', point.x, ':', _point.x)
-        debugPrint(this.y, ':', point.y, ':', _point.y)
         return (x >= _point.x and (x < _point.x + this.width) and (y >= _point.y) and (y < _point.y+this.height))
     end)
 
@@ -310,8 +308,10 @@ end
 
 Stage.set('onUpdate', function(el)
     for i, this in pairs(Object.objects) do
-        if this.update ~= -1 then
-            this.update(el)
+        if this.update ~= -1 and this.update ~= nil then
+            if this.active then
+                this.update(el)
+            end
         end
     end
 end, 'ObjectUpdate')
